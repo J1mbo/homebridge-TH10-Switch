@@ -139,7 +139,7 @@ class TH10Switch {
               var sonoff_reply = JSON.parse(body);
               try {
                 accessory.log.debug(sonoff_reply);
-                var outletState = sonoff_reply.Power;
+                var outletState = sonoff_reply.POWER;
                 if ((outletState == "ON") && (on)) {
                   accessory.state.outlet1On = 1;
                   accessory.state.outlet1InUse = 1;
@@ -275,7 +275,7 @@ class TH10Switch {
             var sonoff_reply = JSON.parse(body);
             try {
               accessory.log.debug(sonoff_reply);
-              var outletState = sonoff_reply.Power;
+              var outletState = sonoff_reply.POWER;
               if (outletState == "ON") {
                 accessory.state.outlet1On = 1;
                 accessory.state.outlet1InUse = 1;
