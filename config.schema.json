@@ -1,0 +1,97 @@
+{
+  "pluginAlias": "TH10Switch",
+  "pluginType": "accessory",
+  "singular": false,
+  "headerDisplay": "This plugin creates power outllet accessory with embedded temperature sensor based on Sonoff TH10/TH16 WiFi switch, running Tasmota firmware.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "description": "Appliance Display Name",
+        "default": "My Appliance",
+        "required": true
+      },
+      "th10IpAddress": {
+        "title": "Sonoff TH10/TH16 IP Address or Hostname",
+        "type": "string",
+        "description": "IP address/hostname of the WiFi switch device.",
+        "required": true,
+	"format": "ipv4"
+      },
+      "alertLowTemperature": {
+        "title": "Low Temperature Alert (in Celcius)",
+        "type": "integer",
+        "default": -5,
+        "description": "The recorded temperature at which to set alarm state because of low temperature.",
+        "required": true
+      },
+      "alertHighTemperature": {
+        "title": "High Temperature Alert (in Celcius)",
+        "type": "integer",
+        "default": 80,
+        "description": "The recorded temperature at which to set alarm state because of high temperature.",
+        "required": true
+      },
+      "pollInterval": {
+        "title": "Interval (in seconds) to poll the status",
+        "type": "integer",
+        "default": 60,
+        "description": "The TH10 can take a while to respond and it's not really necessary to check at intervals less than one minute.",
+        "required": true
+      },
+      "alertCount": {
+        "title": "Alert State Count",
+        "type": "integer",
+        "default": 2,
+        "description": "Number of consecutive over-threshold readings that must be made before triggering the alert state in HomeKit (reduces false alerts in certain applications).",
+        "required": true
+      },
+      "th10StatusLocation": {
+        "title": "Sonoff TH10/TH16 temperature status URL",
+        "type": "string",
+        "description": "URL to retrieve current temperature from device.",
+        "default": "/cm?cmnd=status%208",
+        "required": true
+      },
+      "th10OutletStatusLocation": {
+        "title": "Sonoff TH10/TH16 outlet status URL",
+        "type": "string",
+        "description": "URL to retrieve current outlet status from device.",
+        "default": "/cm?cmnd=power",
+        "required": true
+      },
+      "th10OnLocation": {
+        "title": "Sonoff TH10/TH16 Device ON URL",
+        "type": "string",
+        "description": "URL to turn attached device ON.",
+        "default": "/cm?cmnd=power%20on",
+        "required": true
+      },
+      "th10OffLocation": {
+        "title": "Sonoff TH10/TH16 Device OFF URL",
+        "type": "string",
+        "description": "URL to turn the attached device OFF.",
+        "default": "/cm?cmnd=power%20off",
+        "required": true
+      },
+      "hysteresis": {
+        "title": "Hysteresis",
+        "type": "integer",
+        "description": "The amount by which the recorded temperature must change to clear an alarm state (in degrees Kelvin/Celcius).",
+        "default": 3,
+        "required": true
+      }
+    }
+  },
+  "form": ["name", "th10IpAddress", "alertLowTemperature", "alertHighTemperature",
+    {
+      "type": "fieldset",
+      "expandable": true,
+      "title": "Advanced Settings",
+      "description": "Leave these at defaults unless troubleshooting.",
+      "items": ["pollInterval", "th10StatusLocation", "th10OutletStatusLocation", "th10OnLocation", "th10OffLocation", "hysteresis", "alertCount"]
+    }
+  ], "display": null
+}
