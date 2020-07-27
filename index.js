@@ -49,7 +49,7 @@ class TH10Switch {
       };
 
       // Create the services
-      this.outletService = new this.Service.Outlet(this.outletName,"Outlet"); // controls the relay
+      this.outlet1Service = new this.Service.Outlet(this.outletName,"Outlet1"); // controls the relay
       this.contactSensor = new this.Service.ContactSensor(this.name); // reports open/close according to registered alert state
       this.temperatureService = new this.Service.TemperatureSensor(); // reports the measured temperature within the appliance
 
@@ -64,7 +64,7 @@ class TH10Switch {
         .on('get', this.getOutlet1State.bind(this))
         .on('set', this.setOutlet1State.bind(this));
       this.outlet1Service
-        .getCharacteristic(this.Characteristic.Outlet1InUse)
+        .getCharacteristic(this.Characteristic.OutletInUse)
         .on('get', this.getOutlet1InUse.bind(this));
 
       this.contactSensor
@@ -140,13 +140,16 @@ class TH10Switch {
               try {
                 accessory.log.debug(sonoff_reply);
                 var outletState = sonoff_reply.Power;
-                if ((outletState == 1) && (on)) {
+                if ((outletState == "ON") && (on)) {
                   accessory.state.outlet1On = 1;
                   accessory.state.outlet1InUse = 1;
-                } else if ((outletState = 0) && (!on)) {
+                } else if ((outletState = "OFF") && (!on)) {
                   accessory.state.outlet1On = 0;
                   accessory.state.outlet1InUse = 0;
                 }
+              // update the object characteristics with the change
+              accessory.log.debug('setOutlet1State command completed without error.');
+              accessory.outlet1Service.updateCharacteristic(Characteristic.OutletInUse, accessory.state.outlet1InUse);
               } catch(err) {
                 accessory.log('Device did not return expected status ("POWER":"ON" or "POWER":"OFF")');
                 accessory.log(err);
@@ -156,19 +159,14 @@ class TH10Switch {
               accessory.log(err);
             }
           } // if (!error)
-        } // request
+        } ); // request
       } catch(err) {
         accessory.log('Error communicating with device');
         accessory.log(err);
       }
 
-      if (!err) {
-        // update the object characteristics with the change
-        accessory.log.debug('setOutlet1State command completed without error.');
-        accessory.outlet1Service.updateCharacteristic(Characteristic.OutletInUse, accessory.state.outlet1InUse);
-        if (callback) {
-          callback(null, accessory.state.outlet1On);
-        }
+      if (callback) {
+        callback(null, accessory.state.outlet1On);
       }
     } // if accessory.outlet1Locked
   } // setOutlet1State
@@ -274,17 +272,27 @@ class TH10Switch {
         accessory.log.debug(body);
         if (!error) {
           try {
-            accessory.log.debug(sonoff_reply);
-            outletState = sonoff_reply.Power;
-            if ((outletState == 1) && (on)) {
-              accessory.state.outlet1On = 1;
-              accessory.state.outlet1InUse = 1;
-            } else if ((outletState = 0) && (!on)) {
-              accessory.state.outlet1On = 0;
-              accessory.state.outlet1InUse = 0;
+            var sonoff_reply = JSON.parse(body);
+            try {
+              accessory.log.debug(sonoff_reply);
+              var outletState = sonoff_reply.Power;
+              if (outletState == "ON") {
+                accessory.state.outlet1On = 1;
+                accessory.state.outlet1InUse = 1;
+              } else if (outletState = "OFF") {
+                accessory.state.outlet1On = 0;
+                accessory.state.outlet1InUse = 0;
+              }
+              // update the object characteristics with the change
+              accessory.log.debug("pollUpsState: Updating outlet states...");
+              accessory.outlet1Service.updateCharacteristic(Characteristic.On, accessory.state.outlet1On);
+              accessory.outlet1Service.updateCharacteristic(Characteristic.OutletInUse, accessory.state.outlet1InUse);
+            } catch(err) {
+              accessory.log('Device did not return expected status ("POWER":"ON" or "POWER":"OFF")');
+              accessory.log(err);
             }
           } catch(err) {
-            accessory.log('Device did not return expected status ("POWER":"ON" or "POWER":"OFF")');
+            accessory.log('Invalid json received from device collecting temperature data:' + body);
             accessory.log(err);
           }
         } // if
@@ -292,13 +300,6 @@ class TH10Switch {
     } catch(err) {
       accessory.log('Error communicating with device');
       accessory.log(err);
-    }
-
-    if (!err) {
-      // update the object characteristics with the change
-      accessory.log.debug("pollUpsState: Updating outlet states...");
-      accessory.outlet1Service.updateCharacteristic(Characteristic.On, accessory.state.outlet1On);
-      accessory.outlet1Service.updateCharacteristic(Characteristic.OutletInUse, accessory.state.outlet1InUse);
     }
 
     if (callback) {
