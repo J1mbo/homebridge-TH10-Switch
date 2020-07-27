@@ -46,6 +46,8 @@ class TH10Switch {
         outlet1InUse: 0,
         outlet1Locked: 0,
         alerts: 0,
+        highalerts: 0,
+        lowalerts: 0
       };
 
       // Create the services
@@ -211,17 +213,15 @@ class TH10Switch {
               // process high temperature alarm states
               if ((accessory.state.contactSensorState == 0) & (temperature >= accessory.alertHighTemperature)) {
                 accessory.log("WARNING: Alert threshold " + accessory.alertHighTemperature + "*C exceeded.");
-                accessory.state.alerts += 1;
-                if (accessory.state.alerts == accessory.alertCount) {
+                accessory.state.highalerts += 1;
+                if (accessory.state.highalerts == accessory.alertCount) {
                   // consecutive alert count reached: raise alarm in HomeKit
-                  accessory.log("WARNING: Alert count exceeded; raising alarm in HomeKit");
-                  accessory.state.contactSensorState = 1;
+                  accessory.log("WARNING: Alert count exceeded for high temperature events; raising alarm in HomeKit");
                 }
               } else if ((accessory.state.contactSensorState == 1) & (temperature <= (accessory.alertHighTemperature - accessory.hysteresis))) {
                 accessory.log("INFORMATION: Previous alert condition cleared, reported temperature is " + temperature + "*C.");
-                accessory.state.contactSensorState = 0;
-                accessory.state.alerts = 0;
-              } else if (accessory.state.alerts > 0) {
+                accessory.state.highalerts = 0;
+              } else if (accessory.state.highalerts > 0) {
                 // something else happened by we didn't log an alert state so clear the counter
                 accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning alert count");
                 accessory.state.alerts = 0;
@@ -230,20 +230,24 @@ class TH10Switch {
               // process low temperature alarm states
               if ((accessory.state.contactSensorState == 0) & (temperature <= accessory.alertLowTemperature)) {
                 accessory.log("WARNING: Alert threshold " + accessory.alertLowTemperature + "*C passed.");
-                accessory.state.alerts += 1;
-                if (accessory.state.alerts == accessory.alertCount) {
+                accessory.state.lowalerts += 1;
+                if (accessory.state.lowalerts == accessory.alertCount) {
                   // consecutive alert count reached: raise alarm in HomeKit
-                  accessory.log("WARNING: Alert count exceeded; raising alarm in HomeKit");
-                  accessory.state.contactSensorState = 1;
+                  accessory.log("WARNING: Alert count exceeded for low temperature events; raising alarm in HomeKit");
                 }
               } else if ((accessory.state.contactSensorState == 1) & (temperature >= (accessory.alertLowTemperature + accessory.hysteresis))) {
                 accessory.log("INFORMATION: Previous alert condition cleared, reported temperature is " + temperature + "*C.");
-                accessory.state.contactSensorState = 0;
-                accessory.state.alerts = 0;
-              } else if (accessory.state.alerts > 0) {
+                accessory.state.lowalerts = 0;
+              } else if (accessory.state.lowalerts > 0) {
                 // something else happened by we didn't log an alert state so clear the counter
                 accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning alert count");
-                accessory.state.alerts = 0;
+                accessory.state.lowalerts = 0;
+              }
+
+              if ((accessory.state.highalerts || accessory.state.lowalerts) >= accessory.alertCount) {
+                accessory.state.contactSensorState = 1; // raise alert flag
+              } else {
+                accessory.state.contactSensorState = 0; // clear alert flag
               }
 
               accessory.log.debug("pollTH10State: Updating accessory state...");
