@@ -1,12 +1,18 @@
 // TH10/TH16 WiFi Switch Plugin
 // Copyright (c) James Pearce, 2020
-// Last updated July 2020
+// Last updated March 2021
 //
 // Version 1:
 // - Creates a power outlet device, with embedded contact sensor (for temperature alerts, high or low, and
 //   embedded temperature sensor.
 // - Note: Supports a single attached DS18B20 sesnor currently. These devices follow a one-wire protocol so it may
 //   be possible to connect two sensors, e.g. in a Fridge Freezer type appliance, to monitor both cavities in future.
+//
+// Version 1.01:
+// - Extended temperature range from -99 to +99*C
+//
+// Version 1.02:
+// - Corrected bitwise and, which caused error flags to cycle
 //
 // globals and imports
 var request = require('request');
@@ -212,40 +218,40 @@ class TH10Switch {
               accessory.state.temperature = temperature;
 
               // process high temperature alarm states
-              if ((accessory.state.contactSensorState == 0) & (temperature >= accessory.alertHighTemperature)) {
-                accessory.log("WARNING: Alert threshold " + accessory.alertHighTemperature + "*C exceeded.");
+              if ((accessory.state.contactSensorState == 0) && (temperature >= accessory.alertHighTemperature)) {
+                accessory.log("WARNING: High Temperature Alert Threshold " + accessory.alertHighTemperature + "*C exceeded.");
                 accessory.state.highalerts += 1;
                 if (accessory.state.highalerts == accessory.alertCount) {
                   // consecutive alert count reached: raise alarm in HomeKit
                   accessory.log("WARNING: Alert count exceeded for high temperature events; raising alarm in HomeKit");
                 }
-              } else if ((accessory.state.contactSensorState == 1) & (temperature <= (accessory.alertHighTemperature - accessory.hysteresis))) {
-                accessory.log("INFORMATION: Previous alert condition cleared, reported temperature is " + temperature + "*C.");
+              } else if ((accessory.state.contactSensorState == 1) && (temperature <= (accessory.alertHighTemperature - accessory.hysteresis))) {
+                accessory.log("INFORMATION: Previous high temperature alert condition cleared, reported temperature is " + temperature + "*C.");
                 accessory.state.highalerts = 0;
               } else if (accessory.state.highalerts > 0) {
-                // something else happened by we didn't log an alert state so clear the counter
-                accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning alert count");
+                // something else happened but we didn't log an alert state so clear the counter
+                accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning high temperature alert count");
                 accessory.state.alerts = 0;
               }
 
               // process low temperature alarm states
-              if ((accessory.state.contactSensorState == 0) & (temperature <= accessory.alertLowTemperature)) {
-                accessory.log("WARNING: Alert threshold " + accessory.alertLowTemperature + "*C passed.");
+              if ((accessory.state.contactSensorState == 0) && (temperature <= accessory.alertLowTemperature)) {
+                accessory.log("WARNING: Low Temperature Alert Threshold " + accessory.alertLowTemperature + "*C passed.");
                 accessory.state.lowalerts += 1;
                 if (accessory.state.lowalerts == accessory.alertCount) {
                   // consecutive alert count reached: raise alarm in HomeKit
                   accessory.log("WARNING: Alert count exceeded for low temperature events; raising alarm in HomeKit");
                 }
-              } else if ((accessory.state.contactSensorState == 1) & (temperature >= (accessory.alertLowTemperature + accessory.hysteresis))) {
+              } else if ((accessory.state.contactSensorState == 1) && (temperature >= (accessory.alertLowTemperature + accessory.hysteresis))) {
                 accessory.log("INFORMATION: Previous alert condition cleared, reported temperature is " + temperature + "*C.");
                 accessory.state.lowalerts = 0;
               } else if (accessory.state.lowalerts > 0) {
                 // something else happened by we didn't log an alert state so clear the counter
-                accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning alert count");
+                accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning low temperature alert count");
                 accessory.state.lowalerts = 0;
               }
 
-              if ((accessory.state.highalerts || accessory.state.lowalerts) >= accessory.alertCount) {
+              if ((accessory.state.highalerts >= accessory.alertCount) || (accessory.state.lowalerts >= accessory.alertCount)) {
                 accessory.state.contactSensorState = 1; // raise alert flag
               } else {
                 accessory.state.contactSensorState = 0; // clear alert flag

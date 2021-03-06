@@ -1,6 +1,6 @@
 {
   "name": "homebridge-th10-switch",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "HomeBridge Plugin to create a HomeKit WiFi switch using a Sonoff TH10 or TH16 Smart WiFi Switch running Tasmota firmware and with an attached DS18B20 temperature sensor.",
   "main": "index.js",
   "scripts": {
