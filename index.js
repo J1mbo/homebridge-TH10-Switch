@@ -14,6 +14,10 @@
 // Version 1.02:
 // - Corrected bitwise and, which caused error flags to cycle
 //
+// Version 1.03:
+// - Fixed pollTimer config
+// - Corrected return from alert logic
+//
 // globals and imports
 var request = require('request');
 
@@ -39,7 +43,7 @@ class TH10Switch {
       this.th10OutletStatusLocation = config.th10OutletStatusLocation || '/cm?cmnd=power';
       this.th10OnLocation = config.th10OnLocation || '/cm?cmnd=power%20on';
       this.th10OffLocation = config.th10OffLocation || '/cm?cmnd=power%20on';
-      this.pollTimer = config.pollTimer || 60; //default poll interval = 60 seconds
+      this.pollTimer = config.pollInterval || 60; //default poll interval = 60 seconds
       this.alertCount = config.alertCount || 0; // number of consecutive alerts recorded before raising HomeKit alert status
       this.alertLowTemperature = config.alertLowTemperature || -5;
       this.alertHighTemperature = config.alertHighTemperature || 80;
@@ -225,10 +229,11 @@ class TH10Switch {
                   // consecutive alert count reached: raise alarm in HomeKit
                   accessory.log("WARNING: Alert count exceeded for high temperature events; raising alarm in HomeKit");
                 }
-              } else if ((accessory.state.contactSensorState == 1) && (temperature <= (accessory.alertHighTemperature - accessory.hysteresis))) {
+              } else if ((accessory.state.contactSensorState == 1) && (accessory.state.highalerts > 0) &&
+		         (temperature <= (accessory.alertHighTemperature - accessory.hysteresis))) {
                 accessory.log("INFORMATION: Previous high temperature alert condition cleared, reported temperature is " + temperature + "*C.");
                 accessory.state.highalerts = 0;
-              } else if (accessory.state.highalerts > 0) {
+              } else if ((accessory.state.contactSensorState == 0) && (accessory.state.highalerts > 0)) {
                 // something else happened but we didn't log an alert state so clear the counter
                 accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning high temperature alert count");
                 accessory.state.alerts = 0;
@@ -242,10 +247,11 @@ class TH10Switch {
                   // consecutive alert count reached: raise alarm in HomeKit
                   accessory.log("WARNING: Alert count exceeded for low temperature events; raising alarm in HomeKit");
                 }
-              } else if ((accessory.state.contactSensorState == 1) && (temperature >= (accessory.alertLowTemperature + accessory.hysteresis))) {
-                accessory.log("INFORMATION: Previous alert condition cleared, reported temperature is " + temperature + "*C.");
+              } else if ((accessory.state.contactSensorState == 1) && (accessory.state.lowalerts > 0) &&
+			 (temperature >= (accessory.alertLowTemperature + accessory.hysteresis))) {
+                accessory.log("INFORMATION: Previous low temperature alert condition cleared, reported temperature is " + temperature + "*C.");
                 accessory.state.lowalerts = 0;
-              } else if (accessory.state.lowalerts > 0) {
+              } else if ((accessory.state.contactSensorState == 0) && (accessory.state.lowalerts > 0)) {
                 // something else happened by we didn't log an alert state so clear the counter
                 accessory.log.debug("INFORMATION: Temperature reported withn normal range, clearning low temperature alert count");
                 accessory.state.lowalerts = 0;
