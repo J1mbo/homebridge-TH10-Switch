@@ -90,7 +90,8 @@ class TH10Switch {
 
     // Initialise the plugin ahead of any function call with static configured IP address
     // we need to update HomeKit that this device can report temperatures below zero degrees:
-    this.temperatureService.getCharacteristic(Characteristic.CurrentTemperature).props.minValue = -50;
+    this.temperatureService.getCharacteristic(Characteristic.CurrentTemperature).props.minValue = -99;
+    this.temperatureService.getCharacteristic(Characteristic.CurrentTemperature).props.maxValue = 99;
     // ... and collect the data from the device...
     accessory.pollTH10State();
 
